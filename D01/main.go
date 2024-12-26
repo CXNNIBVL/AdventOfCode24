@@ -75,14 +75,6 @@ func Part1(left, right []uint) {
 	fmt.Printf("Part1: Total Distance = %d\n", getTotalDistance(left, right))
 }
 
-func advanceSlice[T any](s []T) ([]T, bool) {
-	if len(s) == 1 {
-		return s, false
-	}
-
-	return s[1:], true
-}
-
 func Part2(left, right []uint) {
 	multMap := make(map[uint]uint)
 
