@@ -10,11 +10,14 @@ Advent of Code 2024 problems
 For [day one](https://adventofcode.com/2024/day/1), run the go app via
 
 ```bash
+cd D01
 go run .
 ```
 
 ## Day 02
-Includes Advent Of Code test inside the `app` directory which can be invoked via
+For [day two](https://adventofcode.com/2024/day/2), run the go app via
+
 ```bash
-go test ./app/
+cd D02
+go run .
 ```
