@@ -24,9 +24,10 @@ go run .
 ```
 
 ## Day 03
-For [day three](https://adventofcode.com/2024/day/3), run the go app via
+For [day three](https://adventofcode.com/2024/day/3), run the bash script via
 
 ```bash
 cd D03
-go run .
+chmod +x ./calc.sh
+./calc.sh
 ```
