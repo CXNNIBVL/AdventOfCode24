@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/CXNNIBVL/goutil/iter"
+	"github.com/CXNNIBVL/goutil/math"
 )
 
 const (
@@ -13,8 +16,10 @@ const (
 	SEQ       = "XMAS"
 )
 
-func parseFileAsMatrix(f *os.File) []string {
-	mat := make([]string, 0, 10)
+type Mat2 []string
+
+func parseFileAsMatrix(f *os.File) Mat2 {
+	mat := make(Mat2, 0, 10)
 	sc := bufio.NewScanner(f)
 
 	for sc.Scan() {
@@ -24,142 +29,101 @@ func parseFileAsMatrix(f *os.File) []string {
 	return mat
 }
 
-func reduceMatToQuadMat(startX, startY int, mat []string, width int) []string {
-
-	nrows, ncols := len(mat), len(mat[0])
-
-	yBound := startY + width
-	xBound := startX + width
-
-	// Submatrix can't fit
-	if yBound > nrows || xBound > ncols {
-		return nil
-	}
-
-	newMat := make([]string, width)
-
-	newY := 0
-	oldY := startY
-	for newY < width {
-		newMat[newY] = strings.Clone(mat[oldY])
-		newY++
-		oldY++
-	}
-
-	// For each row, truncate columns
-	for ix := range newMat {
-		newMat[ix] = newMat[ix][startX:xBound]
-	}
-
-	return newMat
+func (m *Mat2) NumRowsCols() (rows, cols int) {
+	return len(*m), len((*m)[0])
 }
 
-func getTopLeftToBottomRightDiagonalOfQuadMat(mat []string) string {
-
-	width := len(mat)
-
-	var s string
-
-	for ix := 0; ix < width; ix++ {
-		s = s + string(mat[ix][ix])
+func (m *Mat2) Reverse() {
+	for ix := range *m {
+		(*m)[ix] = reverseString((*m)[ix])
 	}
-
-	return s
 }
 
-func getBottomLeftToTopRightDiagonalOfQuadMat(mat []string) string {
-	width := len(mat)
-
-	var s string
-
-	y := width - 1
-	x := 0
-
-	for x < width {
-		s = s + string(mat[y][x])
-		y = y - 1
-		x = x + 1
+func reverseString(s string) (reversed string) {
+	for _, c := range s {
+		reversed = string(c) + reversed
 	}
-
-	return s
+	return
 }
 
 func countSequenceMatches(str, seq string, addReverseSearch bool) int {
 	count := strings.Count(str, seq)
 
 	if addReverseSearch {
-		var reversed string
-
-		for _, c := range str {
-			reversed = string(c) + reversed
-		}
-
-		count = count + strings.Count(reversed, seq)
+		count = count + strings.Count(reverseString(str), seq)
 	}
 
 	return count
 }
 
-func divideMatIntoQuadMatsAndCountMatches(mat []string, seq string, searchDiag, searchHoriz, searchVert bool) int {
-
-	width := len(seq)
-	nrows := len(mat)
-	ncols := len(mat[0])
-
+func countHorizontalMatches(mat Mat2, seq string, addScanReverse bool) int {
 	matches := 0
 
-	for y := 0; y < nrows; y++ {
-		for x := 0; x < ncols; x++ {
-			submat := reduceMatToQuadMat(x, y, mat, width)
-
-			if submat == nil {
-				continue
-			}
-
-			if len(submat) != len(seq) || len(submat[0]) != len(seq) {
-				panic("Non square matrix detected")
-			}
-
-			if searchDiag {
-				tlbr := getTopLeftToBottomRightDiagonalOfQuadMat(submat)
-				bltr := getBottomLeftToTopRightDiagonalOfQuadMat(submat)
-
-				// Diagonal
-				matches = matches + countSequenceMatches(tlbr, seq, true)
-				matches = matches + countSequenceMatches(bltr, seq, true)
-			}
-
-			if searchHoriz {
-				for _, row := range submat {
-					matches = matches + countSequenceMatches(row, seq, true)
-				}
-			}
-
-			if searchVert {
-				for subx := 0; subx < width; subx++ {
-					var colstr string
-					for suby := 0; suby < width; suby++ {
-						colstr = colstr + string(submat[suby][subx])
-					}
-					matches = matches + countSequenceMatches(colstr, seq, true)
-				}
-			}
-		}
-	}
-
-	matFitsAllBlocks := nrows%width == 0 && ncols%width == 0
-
-	if !matFitsAllBlocks {
-		panic("Can only handle search matrices where row size and col size are a multiple of the queries length")
+	for _, row := range mat {
+		matches = matches + countSequenceMatches(row, seq, addScanReverse)
 	}
 
 	return matches
 }
 
+func countVerticalMatches(mat Mat2, seq string, addScanReverse bool) int {
+	matches := 0
+
+	_, ncols := mat.NumRowsCols()
+
+	for x := range iter.Interval(0, ncols) {
+		var column string
+		for _, row := range mat {
+			column = column + string(row[x])
+		}
+		matches = matches + countSequenceMatches(column, seq, addScanReverse)
+	}
+
+	return matches
+}
+
+func countDiagonalMatches(mat Mat2, seq string, addScanReverse bool) int {
+	matches := 0
+
+	_, ncols := mat.NumRowsCols()
+
+	for x_ := range iter.Interval(-(ncols - 1), ncols) {
+		y, x, items := max(-x_, 0), max(x_, 0), ncols-math.Abs(x_)
+
+		var diag string
+		for i := range iter.Interval(0, items) {
+			diag = diag + string(mat[y+i][x+i])
+		}
+
+		matches = matches + countSequenceMatches(diag, seq, addScanReverse)
+	}
+
+	return matches
+}
+
+func Part1(mat Mat2) {
+	if rows, cols := mat.NumRowsCols(); rows != cols {
+		panic("Cannot handle non quadratic search matrices")
+	}
+
+	seq := SEQ
+
+	matches := countHorizontalMatches(mat, seq, true)
+	matches = matches + countVerticalMatches(mat, seq, true)
+	matches = matches + countDiagonalMatches(mat, seq, true)
+
+	mat.Reverse()
+
+	matches = matches + countDiagonalMatches(mat, seq, true)
+
+	mat.Reverse()
+
+	fmt.Printf("Part1: Found %d matches\n", matches)
+}
+
 func main() {
 
-	file, err := os.Open(TEST_FILE)
-	seq := SEQ
+	file, err := os.Open(FILE)
 
 	if err != nil {
 		fmt.Println(err)
@@ -170,7 +134,5 @@ func main() {
 
 	mat := parseFileAsMatrix(file)
 
-	matches := divideMatIntoQuadMatsAndCountMatches(mat, seq, true, true, true)
-
-	fmt.Println(matches)
+	Part1(mat)
 }

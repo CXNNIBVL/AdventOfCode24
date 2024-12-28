@@ -1,4 +1,4 @@
-module github.com/CXNNIBVL/AdventOfCode24/D04
+module github.com/CXNNIBVL/AdventOfCode24/playground
 
 go 1.23.4
 
