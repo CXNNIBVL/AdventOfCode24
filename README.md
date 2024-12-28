@@ -40,7 +40,8 @@ For [day two](https://adventofcode.com/2024/day/4), run the go app via
 cd D04
 go run .
 ```
+Here some crude drawings detailing (really badly) what math i came up with
 
-![D4/01](./assets/D04/3%20(Mittel).jpg)
-![D4/01](./assets/D04/1%20(Mittel).jpg)
-![D4/01](./assets/D04/2%20(Mittel).jpg)
+* [assets/D4/03.jpg](./assets/D04/3%20(Mittel).jpg) 
+* [assets/D4/01.jpg](./assets/D04/1%20(Mittel).jpg)
+* [assets/D4/02.jpg](./assets/D04/2%20(Mittel).jpg)
