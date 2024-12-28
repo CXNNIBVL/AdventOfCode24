@@ -34,7 +34,7 @@ chmod +x ./calc.sh
 ```
 
 ## Day 04
-For [day two](https://adventofcode.com/2024/day/4), run the go app via
+For [day four](https://adventofcode.com/2024/day/4), run the go app via
 
 ```bash
 cd D04
