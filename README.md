@@ -5,6 +5,7 @@ Advent of Code 2024 problems
   - [Day 01](#day-01)
   - [Day 02](#day-02)
   - [Day 03](#day-03)
+  - [Day 04](#day-04)
 
 
 ## Day 01
@@ -31,3 +32,16 @@ cd D03
 chmod +x ./calc.sh
 ./calc.sh
 ```
+
+## Day 04
+For [day four](https://adventofcode.com/2024/day/4), run the go app via
+
+```bash
+cd D04
+go run .
+```
+Here some crude drawings detailing (really badly) what math i came up with
+
+* [assets/D4/03.jpg](./assets/D04/3%20(Mittel).jpg) 
+* [assets/D4/01.jpg](./assets/D04/1%20(Mittel).jpg)
+* [assets/D4/02.jpg](./assets/D04/2%20(Mittel).jpg)
