@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	FILE      = "input"
-	TEST_FILE = "input_test3"
-	SEQ       = "XMAS"
+	FILE       = "input"
+	TEST_FILE  = "input_test3"
+	TEST2_FILE = "input2_test"
+	XMAS       = "XMAS"
 )
 
 type Mat2 []string
@@ -102,11 +103,7 @@ func countDiagonalMatches(mat Mat2, seq string, addScanReverse bool) int {
 }
 
 func Part1(mat Mat2) {
-	if rows, cols := mat.NumRowsCols(); rows != cols {
-		panic("Cannot handle non quadratic search matrices")
-	}
-
-	seq := SEQ
+	seq := XMAS
 
 	matches := countHorizontalMatches(mat, seq, true)
 	matches = matches + countVerticalMatches(mat, seq, true)
@@ -119,6 +116,56 @@ func Part1(mat Mat2) {
 	mat.Reverse()
 
 	fmt.Printf("Part1: Found %d matches\n", matches)
+}
+
+func foundTypeA(mat Mat2, row, col int) bool {
+	// Center 'A' + Top left 'M' + Bottom Left 'M' + Top Right 'S' + Bottom Right 'S'
+	return mat[row][col] == 'A' && mat[row-1][col-1] == 'M' && mat[row+1][col-1] == 'M' && mat[row-1][col+1] == 'S' && mat[row+1][col+1] == 'S'
+}
+
+func foundTypeB(mat Mat2, row, col int) bool {
+	// Center 'A' + Top left 'S' + Bottom Left 'S' + Top Right 'M' + Bottom Right 'M'
+	return mat[row][col] == 'A' && mat[row-1][col-1] == 'S' && mat[row+1][col-1] == 'S' && mat[row-1][col+1] == 'M' && mat[row+1][col+1] == 'M'
+}
+
+func foundTypeC(mat Mat2, row, col int) bool {
+	// Center 'A' + Top left 'M' + Bottom Left 'S' + Top Right 'M' + Bottom Right 'S'
+	return mat[row][col] == 'A' && mat[row-1][col-1] == 'M' && mat[row+1][col-1] == 'S' && mat[row-1][col+1] == 'M' && mat[row+1][col+1] == 'S'
+}
+
+func foundTypeD(mat Mat2, row, col int) bool {
+	// Center 'A' + Top left 'S' + Bottom Left 'M' + Top Right 'S' + Bottom Right 'M'
+	return mat[row][col] == 'A' && mat[row-1][col-1] == 'S' && mat[row+1][col-1] == 'M' && mat[row-1][col+1] == 'S' && mat[row+1][col+1] == 'M'
+}
+
+func Part2(mat Mat2) {
+
+	nrows, ncols := mat.NumRowsCols()
+
+	matches := 0
+
+	for row := range iter.Interval(1, nrows-1) {
+		for col := range iter.Interval(1, ncols-1) {
+
+			if foundTypeA(mat, row, col) {
+				matches = matches + 1
+			}
+
+			if foundTypeB(mat, row, col) {
+				matches = matches + 1
+			}
+
+			if foundTypeC(mat, row, col) {
+				matches = matches + 1
+			}
+
+			if foundTypeD(mat, row, col) {
+				matches = matches + 1
+			}
+		}
+	}
+
+	fmt.Printf("Part2: Found %d matches\n", matches)
 }
 
 func main() {
@@ -134,5 +181,10 @@ func main() {
 
 	mat := parseFileAsMatrix(file)
 
+	if rows, cols := mat.NumRowsCols(); rows != cols {
+		panic("Cannot handle non quadratic search matrices")
+	}
+
 	Part1(mat)
+	Part2(mat)
 }
