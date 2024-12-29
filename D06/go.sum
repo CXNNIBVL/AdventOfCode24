@@ -1,0 +1,4 @@
+github.com/CXNNIBVL/goutil v0.0.0-20241228002916-781d5fd26629 h1:e2Do34GdAVpUsU3PM+XeGkJbDVDH+wHIyTgshlDwmCc=
+github.com/CXNNIBVL/goutil v0.0.0-20241228002916-781d5fd26629/go.mod h1:wFNMj65FIBooDhEyEr6J5r3pnmVsun0GrGkvNWomC7E=
+golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 h1:1UoZQm6f0P/ZO0w1Ri+f+ifG/gXhegadRdwBIXEFWDo=
+golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67/go.mod h1:qj5a5QZpwLU2NLQudwIN5koi3beDhSAlJwa67PuM98c=
