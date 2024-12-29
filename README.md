@@ -3,11 +3,13 @@ Advent of Code 2024 problems
 
 - [AdventOfCode24](#adventofcode24)
     - [Please Note](#please-note)
-  - [Day 01](#day-01)
-  - [Day 02](#day-02)
-  - [Day 03](#day-03)
-  - [Day 04](#day-04)
-  - [Day 05](#day-05)
+  - [Day 01 (Code)](#day-01-code)
+  - [Day 02 (Code)](#day-02-code)
+  - [Day 03 (Code)](#day-03-code)
+  - [Day 04 (Code)](#day-04-code)
+  - [Day 05 (Code)](#day-05-code)
+  - [Day 06 (Code)](#day-06-code)
+  - [Day 07 (Code)](#day-07-code)
 
 ### Please Note
 I put my inputs in a separate private repository. The scripts expect the input files to be in `inputs/D<NUMBER>/`.
@@ -18,7 +20,7 @@ So for Day 01, the script would expect the input file to be in
 inputs/D01/input
 ```
 
-## Day 01
+## Day 01 [(Code)](./D01/main.go)
 For [day one](https://adventofcode.com/2024/day/1), run the go app via
 
 ```bash
@@ -26,7 +28,7 @@ cd D01
 go run .
 ```
 
-## Day 02
+## Day 02 [(Code)](./D02/main.go)
 For [day two](https://adventofcode.com/2024/day/2), run the go app via
 
 ```bash
@@ -34,7 +36,7 @@ cd D02
 go run .
 ```
 
-## Day 03
+## Day 03 [(Code)](./D03/calc.sh)
 For [day three](https://adventofcode.com/2024/day/3), run the bash script via
 
 ```bash
@@ -43,7 +45,7 @@ chmod +x ./calc.sh
 ./calc.sh
 ```
 
-## Day 04
+## Day 04 [(Code)](./D04/main.go)
 For [day four](https://adventofcode.com/2024/day/4), run the go app via
 
 ```bash
@@ -56,9 +58,26 @@ Here some crude drawings detailing (really badly) what math i came up with
 * [assets/D4/01.jpg](./assets/D04/1%20(Mittel).jpg)
 * [assets/D4/02.jpg](./assets/D04/2%20(Mittel).jpg)
 
-## Day 05
+## Day 05 [(Code)](./D05/main.go)
 For [day five](https://adventofcode.com/2024/day/5), run the go app via
 
 ```bash
 cd D05
 go run .
+```
+
+## Day 06 [(Code)](./D06/main.go)
+For [day six](https://adventofcode.com/2024/day/6), run the go app via
+
+```bash
+cd D06
+go run .
+```
+
+## Day 07 [(Code)](./D07/main.go)
+For [day seven](https://adventofcode.com/2024/day/7), run the go app via
+
+```bash
+cd D07
+go run .
+```
