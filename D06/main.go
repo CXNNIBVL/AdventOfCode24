@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/CXNNIBVL/goutil/iter"
@@ -168,15 +169,18 @@ func parseMapFromLines(lines []string) (m Mat2, g Guard) {
 }
 
 type GameState struct {
-	m  Mat2
-	g  Guard
-	hm map[Vec2]int
+	m     Mat2
+	g     Guard
+	hm    map[Vec2]int
+	hasHm bool
 }
 
 func (gs *GameState) loop(tickCb func(gs *GameState) bool) {
 	for {
 		// Heatmap
-		gs.hm[gs.g.position]++
+		if gs.hasHm {
+			gs.hm[gs.g.position]++
+		}
 
 		if exit := tickCb(gs); exit {
 			break
@@ -197,7 +201,7 @@ func (gs *GameState) loop(tickCb func(gs *GameState) bool) {
 	}
 }
 
-func Part1(fileLines []string) {
+func Part1(fileLines []string) []Vec2 {
 	m, guard := parseMapFromLines(fileLines)
 	gs := GameState{m: m, g: guard}
 
@@ -206,93 +210,92 @@ func Part1(fileLines []string) {
 		return false
 	})
 
-	fmt.Println(len(gs.hm))
+	fmt.Println("Part1: ", len(gs.hm))
+
+	uniqPoints := []Vec2{}
+	for k := range gs.hm {
+		uniqPoints = append(uniqPoints, k)
+	}
+
+	return uniqPoints
 }
 
 func (gs *GameState) addHeatMap() {
+	gs.hasHm = true
 	gs.hm = make(map[Vec2]int)
 }
 
-func (gs *GameState) clearHeatMap() {
-	gs.hm = make(map[Vec2]int)
-}
-
-func testAddingObstruction(wg *sync.WaitGroup, ch chan<- int, beginAtRow, numRows int, fileLines []string) {
+func testAddingObstructionV2(uniqPoints []Vec2, fileLines []string, wg *sync.WaitGroup, ch chan<- int) {
 	defer wg.Done()
 
-	m, g := parseMapFromLines(fileLines)
-	gs := GameState{m: m, g: g}
-	gs.addHeatMap()
+	newFileLines := []string{}
+	for _, line := range fileLines {
+		newFileLines = append(newFileLines, strings.Clone(line))
+	}
 
-	_, ncols := gs.m.NumRowsCols()
+	m, g := parseMapFromLines(newFileLines)
+	gs := GameState{m: m, g: g}
 
 	numGuardsStuck := 0
 
-	for numRows > 0 {
-		for col := range iter.Interval(0, ncols) {
+	for _, p := range uniqPoints {
 
-			obj := inspectMapIndex(beginAtRow, col, gs.m)
+		obj := inspectMapIndex(p.y, p.x, gs.m)
 
-			if obj == OBJ_OBSTACLE || (beginAtRow == gs.g.position.y && col == gs.g.position.x) {
-				// skip
-				continue
-			}
-
-			placedx, placedy := col, beginAtRow
-
-			// Place obstacle
-			gs.m[placedy][placedx] = OBJ_OBSTACLE
-
-			stuck := false
-			gs.loop(func(gs *GameState) bool {
-				for _, v := range gs.hm {
-					if v > 50 {
-						stuck = true
-						return true
-					}
-				}
-
-				return false
-			})
-
-			if stuck {
-				numGuardsStuck = numGuardsStuck + 1
-				// fmt.Printf("%v\n", gs.hm)
-			}
-
-			// Cleanup placed obstacle
-			gs.m[placedy][placedx] = obj
-			// Clear heatmap
-			gs.clearHeatMap()
-			// Reset guard
-			gs.g = g
+		if obj == OBJ_OBSTACLE || (p.y == gs.g.position.y && p.x == gs.g.position.x) {
+			// skip
+			continue
 		}
 
-		numRows--
-		beginAtRow++
+		// Place obstacle
+		gs.m[p.y][p.x] = OBJ_OBSTACLE
+
+		stuck := false
+		steps := 0
+		gs.loop(func(gs *GameState) bool {
+			steps = steps + 1
+
+			if steps > 25000 {
+				stuck = true
+			}
+
+			return stuck
+		})
+
+		if stuck {
+			numGuardsStuck = numGuardsStuck + 1
+		}
+
+		// Cleanup placed obstacle
+		gs.m[p.y][p.x] = obj
+		// Reset guard
+		gs.g = g
 	}
 
 	ch <- numGuardsStuck
 }
 
-func Part2(fileLines []string) {
+func Part2V2(fileLines []string, uniqPoints []Vec2) {
 
 	var wg sync.WaitGroup
 	ch := make(chan int)
 
-	nrows := len(fileLines)
-	const INCR = 1
+	const INCR = 30
 
-	for row := 0; row < nrows; row = row + INCR {
+	id := 0
+	tmp := uniqPoints
+	for len(tmp) > 0 {
 		wg.Add(1)
 
-		count := nrows - row
+		count := INCR
 
-		if count > INCR {
-			count = INCR
+		if len(tmp) < INCR {
+			count = len(tmp)
 		}
 
-		go testAddingObstruction(&wg, ch, row, count, fileLines)
+		go testAddingObstructionV2(tmp[0:count], fileLines, &wg, ch)
+		tmp = tmp[count:]
+		id++
 	}
 
 	go func() {
@@ -310,7 +313,7 @@ func Part2(fileLines []string) {
 }
 
 func main() {
-	file, err := os.Open(FILE_TEST)
+	file, err := os.Open(FILE)
 
 	if err != nil {
 		panic(err)
@@ -319,6 +322,6 @@ func main() {
 	defer file.Close()
 
 	lines := getFileLines(file)
-	// Part1(lines)
-	Part2(lines)
+	uniqPoints := Part1(lines)
+	Part2V2(lines, uniqPoints)
 }
