@@ -8,6 +8,7 @@ Advent of Code 2024 problems
   - [Day 03](#day-03)
   - [Day 04](#day-04)
   - [Day 05](#day-05)
+  - [Day 06](#day-06)
 
 ### Please Note
 I put my inputs in a separate private repository. The scripts expect the input files to be in `inputs/D<NUMBER>/`.
@@ -62,3 +63,12 @@ For [day five](https://adventofcode.com/2024/day/5), run the go app via
 ```bash
 cd D05
 go run .
+```
+
+## Day 06
+For [day six](https://adventofcode.com/2024/day/6), run the go app via
+
+```bash
+cd D06
+go run .
+```
