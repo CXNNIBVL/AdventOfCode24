@@ -15,6 +15,7 @@ const (
 	TEST_FILE1 = "../inputs/D08/input_test1"
 	TEST_FILE2 = "../inputs/D08/input_test2"
 	TEST_FILE3 = "../inputs/D08/input_test3"
+	TEST_HR    = "../inputs/D08/input_rharmonics"
 	EN_DBG     = false
 )
 
@@ -35,10 +36,6 @@ type Vec2 struct {
 }
 
 type Frequency rune
-type Antenna struct {
-	pos  Vec2
-	freq Frequency
-}
 
 const (
 	OBJ_NOTHING rune = '.'
@@ -78,7 +75,7 @@ func isPointInBound(v Vec2, xbound, ybound int) bool {
 	return v.x < xbound && v.x >= 0 && v.y < ybound && v.y >= 0
 }
 
-func findAntiNodePositions(freq Frequency, xbound, ybound int, antennaPoints []Vec2, ch chan<- AntiNodeResult, wg *sync.WaitGroup) {
+func findAntiNodePositions(freq Frequency, xbound, ybound int, antennaPoints []Vec2, ch chan<- AntiNodeResult, wg *sync.WaitGroup, addHarmonicResonance bool) {
 	defer wg.Done()
 
 	foundPositions := []Vec2{}
@@ -107,17 +104,41 @@ func findAntiNodePositions(freq Frequency, xbound, ybound int, antennaPoints []V
 				vflip = -1
 			}
 
-			// Note: The diagonal doesn't have to be a perfect diagonal
-			// like you would find going thru corner to corner of a square
-			anti1.y, anti2.y = p1.y-vflip*vdiff, p2.y+vflip*vdiff
-			anti1.x, anti2.x = p1.x-hflip*hdiff, p2.x+hflip*hdiff
+			anti1.y, anti2.y = p1.y, p2.y
+			anti1.x, anti2.x = p1.x, p2.x
 
-			if isPointInBound(anti1, xbound, ybound) {
-				foundPositions = append(foundPositions, anti1)
-			}
+			oob := false
+			addedAntennaPoints := false
 
-			if isPointInBound(anti2, xbound, ybound) {
-				foundPositions = append(foundPositions, anti2)
+			for !oob {
+				// Note: The diagonal doesn't have to be a perfect diagonal
+				// like you would find going thru corner to corner of a square
+				anti1.y, anti2.y = anti1.y-vflip*vdiff, anti2.y+vflip*vdiff
+				anti1.x, anti2.x = anti1.x-hflip*hdiff, anti2.x+hflip*hdiff
+
+				anti1IsOk, anti2IsOk := isPointInBound(anti1, xbound, ybound), isPointInBound(anti2, xbound, ybound)
+
+				if addHarmonicResonance && !addedAntennaPoints {
+					foundPositions = append(foundPositions, p1)
+					foundPositions = append(foundPositions, p2)
+					addedAntennaPoints = true
+				}
+
+				if anti1IsOk {
+					foundPositions = append(foundPositions, anti1)
+				}
+
+				if anti2IsOk {
+					foundPositions = append(foundPositions, anti2)
+				}
+
+				if !addHarmonicResonance {
+					break
+				}
+
+				if !anti1IsOk && !anti2IsOk {
+					oob = true
+				}
 			}
 		}
 
@@ -125,6 +146,86 @@ func findAntiNodePositions(freq Frequency, xbound, ybound int, antennaPoints []V
 	}
 
 	ch <- AntiNodeResult{positions: foundPositions, freq: freq}
+}
+
+func Part1(antennaMap map[Frequency][]Vec2, xbound, ybound int) {
+	ch := make(chan AntiNodeResult)
+	var wg sync.WaitGroup
+
+	for freq, antennaPoints := range antennaMap {
+		wg.Add(1)
+		go findAntiNodePositions(freq, xbound, ybound, antennaPoints, ch, &wg, false)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	antiNodeMap := make(map[Vec2][]Frequency)
+
+	for r := range ch {
+		for _, p := range r.positions {
+			antiNodeMap[p] = append(antiNodeMap[p], r.freq)
+		}
+	}
+
+	if EN_DBG {
+		fmt.Println("### Part 1 AntiNodes")
+		for p, freqs := range antiNodeMap {
+			sfreqs := string(freqs[0])
+			freqs = freqs[1:]
+
+			for _, r := range freqs {
+				sfreqs = sfreqs + ", " + string(r)
+			}
+
+			fmt.Printf("p:\t%+v,\tf: [%s]\n", p, sfreqs)
+		}
+		fmt.Println("---------------")
+	}
+
+	fmt.Println("Part1 num nodes: ", len(antiNodeMap))
+}
+
+func Part2(antennaMap map[Frequency][]Vec2, xbound, ybound int) {
+	ch := make(chan AntiNodeResult)
+	var wg sync.WaitGroup
+
+	for freq, antennaPoints := range antennaMap {
+		wg.Add(1)
+		go findAntiNodePositions(freq, xbound, ybound, antennaPoints, ch, &wg, true)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	antiNodeMap := make(map[Vec2][]Frequency)
+
+	for r := range ch {
+		for _, p := range r.positions {
+			antiNodeMap[p] = append(antiNodeMap[p], r.freq)
+		}
+	}
+
+	if EN_DBG {
+		fmt.Println("### Part 2 AntiNodes")
+		for p, freqs := range antiNodeMap {
+			sfreqs := string(freqs[0])
+			freqs = freqs[1:]
+
+			for _, r := range freqs {
+				sfreqs = sfreqs + ", " + string(r)
+			}
+
+			fmt.Printf("p:\t%+v,\tf: [%s]\n", p, sfreqs)
+		}
+		fmt.Println("---------------")
+	}
+
+	fmt.Println("Part2 num nodes: ", len(antiNodeMap))
 }
 
 func main() {
@@ -151,40 +252,6 @@ func main() {
 		}
 	}
 
-	ch := make(chan AntiNodeResult)
-	var wg sync.WaitGroup
-
-	for freq, antennaPoints := range antennaMap {
-		wg.Add(1)
-		go findAntiNodePositions(freq, xbound, ybound, antennaPoints, ch, &wg)
-	}
-
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-
-	antiNodeMap := make(map[Vec2][]Frequency)
-
-	for r := range ch {
-		for _, p := range r.positions {
-			antiNodeMap[p] = append(antiNodeMap[p], r.freq)
-		}
-	}
-
-	if EN_DBG {
-		fmt.Println("### AntiNodes")
-		for p, freqs := range antiNodeMap {
-			sfreqs := string(freqs[0])
-			freqs = freqs[1:]
-
-			for _, r := range freqs {
-				sfreqs = sfreqs + ", " + string(r)
-			}
-
-			fmt.Printf("p: %+v, f: [%s]\n", p, sfreqs)
-		}
-	}
-
-	fmt.Println(len(antiNodeMap))
+	Part1(antennaMap, xbound, ybound)
+	Part2(antennaMap, xbound, ybound)
 }
