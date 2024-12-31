@@ -114,6 +114,25 @@ func parseDiskMap(f *os.File) []DiskItem {
 	return dm
 }
 
+func compressViaDiskMap(dm []DiskItem) {
+	for ix := len(dm) - 1; ix >= 0; ix-- {
+		if dm[ix].id == FS_SPACE {
+			continue
+		}
+
+		i := slices.IndexFunc(dm, func(it DiskItem) bool {
+			return it.id == FS_SPACE && it.size >= dm[ix].size
+		})
+
+		// No space found
+		if i == -1 {
+			continue
+		}
+
+		// TODO: check above again...dont think this is ok yet
+	}
+}
+
 func main() {
 
 	f, err := os.Open(FILE)
@@ -132,5 +151,7 @@ func main() {
 	compressFSV1(fs1)
 	fmt.Println("Part1: ", calcFSChecksum(fs1))
 
-	// fmt.Println("Part2: ", calcFSChecksum(fs2))
+	dm2 := slices.Clone(dm)
+	compressViaDiskMap(dm2)
+	fmt.Println("Part2: ", calcFSChecksum(makeFilesystem(dm2)))
 }
