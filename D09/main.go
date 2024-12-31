@@ -46,7 +46,7 @@ func moveToNextChunk(fs []int) ([]int, bool) {
 	return fs, false
 }
 
-func compressFSV1(fs []int) {
+func compressFS(fs []int) {
 	for len(fs) != 1 {
 		fs = moveToNextSpace(fs)
 		_fs, hasNext := moveToNextChunk(fs)
@@ -66,7 +66,7 @@ func calcFSChecksum(fs []int) int {
 
 	for ix, id := range fs {
 		if id == FS_SPACE {
-			break
+			continue
 		}
 
 		cs = cs + ix*id
@@ -114,23 +114,47 @@ func parseDiskMap(f *os.File) []DiskItem {
 	return dm
 }
 
-func compressViaDiskMap(dm []DiskItem) {
-	for ix := len(dm) - 1; ix >= 0; ix-- {
+func compressViaDiskMap(dm []DiskItem) []DiskItem {
+	ix := len(dm) - 1
+	for ix >= 0 {
+
 		if dm[ix].id == FS_SPACE {
+			ix--
 			continue
 		}
 
-		i := slices.IndexFunc(dm, func(it DiskItem) bool {
+		// Find space that can fit our block
+		i := slices.IndexFunc(dm[:ix], func(it DiskItem) bool {
 			return it.id == FS_SPACE && it.size >= dm[ix].size
 		})
 
-		// No space found
+		// No space found or not moveable to the left
 		if i == -1 {
+			ix--
 			continue
 		}
 
-		// TODO: check above again...dont think this is ok yet
+		sizediff := dm[i].size - dm[ix].size
+
+		// Swap
+		dm[i] = dm[ix]
+		dm[ix].id = FS_SPACE
+
+		if sizediff > 0 {
+			// Merge spaces
+			if it := &dm[i+1]; it.id == FS_SPACE {
+				it.size = it.size + sizediff
+			} else {
+				// Append space block
+				dm = slices.Insert(dm, i+1, DiskItem{id: FS_SPACE, size: sizediff})
+				ix = ix + 1
+			}
+		}
+
+		ix--
 	}
+
+	return dm
 }
 
 func main() {
@@ -145,13 +169,11 @@ func main() {
 
 	dm := parseDiskMap(f)
 
-	fs := makeFilesystem(dm)
-
-	fs1 := slices.Clone(fs)
-	compressFSV1(fs1)
+	dm1 := slices.Clone(dm)
+	fs1 := makeFilesystem(dm1)
+	compressFS(fs1)
 	fmt.Println("Part1: ", calcFSChecksum(fs1))
 
 	dm2 := slices.Clone(dm)
-	compressViaDiskMap(dm2)
-	fmt.Println("Part2: ", calcFSChecksum(makeFilesystem(dm2)))
+	fmt.Println("Part2: ", calcFSChecksum(makeFilesystem(compressViaDiskMap(dm2))))
 }
