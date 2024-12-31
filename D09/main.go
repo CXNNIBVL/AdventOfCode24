@@ -64,20 +64,25 @@ func moveToNextSpace(fs []int) []int {
 	return fs[ix:]
 }
 
-func moveToNextChunk(fs []int) []int {
+func moveToNextChunk(fs []int) ([]int, bool) {
 	for ix := len(fs) - 1; ix >= 0; ix-- {
 		if fs[ix] != FS_SPACE {
-			return fs[:ix+1]
+			return fs[:ix+1], true
 		}
 	}
 
-	return fs
+	return fs, false
 }
 
 func compressFS(fs []int) {
 	for len(fs) != 1 {
 		fs = moveToNextSpace(fs)
-		fs = moveToNextChunk(fs)
+		_fs, hasNext := moveToNextChunk(fs)
+		fs = _fs
+
+		if !hasNext {
+			break
+		}
 
 		fs[0] = fs[len(fs)-1]
 		fs[len(fs)-1] = FS_SPACE
@@ -100,7 +105,7 @@ func calcFSChecksum(fs []int) int {
 
 func main() {
 
-	f, err := os.Open(TEST_FILE)
+	f, err := os.Open(FILE)
 
 	if err != nil {
 		panic(err)
