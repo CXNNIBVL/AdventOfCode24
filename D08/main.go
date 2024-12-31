@@ -93,12 +93,13 @@ func findAntiNodePositions(freq Frequency, xbound, ybound int, antennaPoints []V
 			anti1, anti2 := Vec2{x: -1, y: -1}, Vec2{x: -1, y: -1}
 			hflip, vflip := 1, 1
 
-			// Check if p1 is rigth of / below p2
-			if p1.x > p2.x || p1.y > p2.y {
+			// Check if p1 is rigth of p2
+			if p1.x > p2.x {
 				// Flip addition direction
 				hflip = -1
 			}
 
+			// Check if p1 is below p2
 			if p1.y > p2.y {
 				// Flip addition direction
 				vflip = -1
