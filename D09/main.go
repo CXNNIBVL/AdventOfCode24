@@ -19,44 +19,16 @@ const (
 	FS_SPACE = -1
 )
 
-func parseFileSysAndDiskMap(f *os.File) (fs, dm []int) {
-	sc := bufio.NewScanner(f)
+func makeFilesystem(dm []DiskItem) (fs []int) {
+	fs = []int{}
 
-	diskMap := ""
-
-	if ok := sc.Scan(); !ok {
-		panic("No line read")
-	} else {
-		diskMap = sc.Text()
-	}
-
-	isFile := true
-
-	fs, dm = []int{}, []int{}
-
-	id := 0
-	for _, numstr := range diskMap {
-		sizeFsItem, _ := strconv.ParseInt(string(numstr), 10, 64)
-
-		dm = append(dm, int(sizeFsItem))
-
-		descriptor := 0
-
-		if isFile {
-			descriptor = id
-			id = id + 1
-		} else {
-			descriptor = FS_SPACE
-		}
-
-		isFile = !isFile
-
-		for range iter.Interval(0, sizeFsItem) {
-			fs = append(fs, descriptor)
+	for _, fsitem := range dm {
+		for range iter.Interval(0, fsitem.size) {
+			fs = append(fs, fsitem.id)
 		}
 	}
 
-	return fs, dm
+	return fs
 }
 
 func moveToNextSpace(fs []int) []int {
@@ -74,7 +46,7 @@ func moveToNextChunk(fs []int) ([]int, bool) {
 	return fs, false
 }
 
-func compressFS(fs []int) {
+func compressFSV1(fs []int) {
 	for len(fs) != 1 {
 		fs = moveToNextSpace(fs)
 		_fs, hasNext := moveToNextChunk(fs)
@@ -103,6 +75,45 @@ func calcFSChecksum(fs []int) int {
 	return cs
 }
 
+type DiskItem struct {
+	id, size int
+}
+
+func parseDiskMap(f *os.File) []DiskItem {
+	sc := bufio.NewScanner(f)
+
+	diskMap := ""
+
+	if ok := sc.Scan(); !ok {
+		panic("No line read")
+	} else {
+		diskMap = sc.Text()
+	}
+
+	isFile := true
+
+	dm := []DiskItem{}
+
+	id := 0
+	for _, numstr := range diskMap {
+		sizeFsItem, _ := strconv.ParseInt(string(numstr), 10, 64)
+
+		descriptor := 0
+
+		if isFile {
+			descriptor = id
+			id = id + 1
+		} else {
+			descriptor = FS_SPACE
+		}
+
+		dm = append(dm, DiskItem{id: descriptor, size: int(sizeFsItem)})
+		isFile = !isFile
+	}
+
+	return dm
+}
+
 func main() {
 
 	f, err := os.Open(FILE)
@@ -113,9 +124,13 @@ func main() {
 
 	defer f.Close()
 
-	fs, _ := parseFileSysAndDiskMap(f)
-	// fmt.Println(dm)
+	dm := parseDiskMap(f)
 
-	compressFS(fs)
-	fmt.Println(calcFSChecksum(fs))
+	fs := makeFilesystem(dm)
+
+	fs1 := slices.Clone(fs)
+	compressFSV1(fs1)
+	fmt.Println("Part1: ", calcFSChecksum(fs1))
+
+	// fmt.Println("Part2: ", calcFSChecksum(fs2))
 }
