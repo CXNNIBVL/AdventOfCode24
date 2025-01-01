@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"sync"
 )
@@ -31,70 +32,84 @@ func parseMap(f *os.File) [][]int {
 	return m
 }
 
-func isInsideBounds(x, y, xbound, ybound int) bool {
-	return x < xbound && x >= 0 && y < ybound && y >= 0
+type Vec2 struct {
+	x, y int
+}
+
+func isInsideBounds(p Vec2, xbound, ybound int) bool {
+	return p.x < xbound && p.x >= 0 && p.y < ybound && p.y >= 0
 }
 
 const (
-	ACTION_GO_LEFT = iota
-	ACTION_GO_RIGHT
-	ACTION_GO_UP
-	ACTION_GO_DOWN
-	ACTION_GO_XX
+	DIR_GO_LEFT = iota
+	DIR_GO_RIGHT
+	DIR_GO_UP
+	DIR_GO_DOWN
+	DIR_GO_XX
 )
 
-func walkTrail(xstart, ystart int, m [][]int, prevDir, xbound, ybound int) int {
+func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound []Vec2) []Vec2 {
 
-	score := 0
-
-	current := m[ystart][xstart]
+	current := m[start.y][start.x]
 
 	if current == 9 {
-		score = score + 1
+		containsCurrent := slices.ContainsFunc(alreadyFound, func(v Vec2) bool {
+			return v.x == start.x && v.y == start.y
+		})
+
+		if containsCurrent {
+			return alreadyFound
+		}
+
+		return append(alreadyFound, start)
 	}
 
 	// Go right
-	if newx, newy := xstart+1, ystart; prevDir != ACTION_GO_LEFT && isInsideBounds(newx, newy, xbound, ybound) {
-		next := m[newy][newx]
+	newStart := Vec2{x: start.x + 1, y: start.y}
+	if prevDir != DIR_GO_LEFT && isInsideBounds(newStart, xbound, ybound) {
+		next := m[newStart.y][newStart.x]
 		if next == current+1 {
-			score = score + walkTrail(newx, newy, m, ACTION_GO_RIGHT, xbound, ybound)
+			alreadyFound = walkTrail(newStart, m, DIR_GO_RIGHT, xbound, ybound, alreadyFound)
 		}
 	}
 
 	// Go left
-	if newx, newy := xstart-1, ystart; prevDir != ACTION_GO_RIGHT && isInsideBounds(newx, newy, xbound, ybound) {
-		next := m[newy][newx]
+	newStart = Vec2{x: start.x - 1, y: start.y}
+	if prevDir != DIR_GO_RIGHT && isInsideBounds(newStart, xbound, ybound) {
+		next := m[newStart.y][newStart.x]
 		if next == current+1 {
-			score = score + walkTrail(newx, newy, m, ACTION_GO_LEFT, xbound, ybound)
+			alreadyFound = walkTrail(newStart, m, DIR_GO_LEFT, xbound, ybound, alreadyFound)
 		}
 	}
 
 	// Go up
-	if newx, newy := xstart, ystart-1; prevDir != ACTION_GO_DOWN && isInsideBounds(newx, newy, xbound, ybound) {
-		next := m[newy][newx]
+	newStart = Vec2{x: start.x, y: start.y - 1}
+	if prevDir != DIR_GO_DOWN && isInsideBounds(newStart, xbound, ybound) {
+		next := m[newStart.y][newStart.x]
 		if next == current+1 {
-			score = score + walkTrail(newx, newy, m, ACTION_GO_UP, xbound, ybound)
+			alreadyFound = walkTrail(newStart, m, DIR_GO_UP, xbound, ybound, alreadyFound)
 		}
 	}
 
 	// Go down
-	if newx, newy := xstart, ystart+1; prevDir != ACTION_GO_UP && isInsideBounds(newx, newy, xbound, ybound) {
-		next := m[newy][newx]
+	newStart = Vec2{x: start.x, y: start.y + 1}
+	if prevDir != DIR_GO_UP && isInsideBounds(newStart, xbound, ybound) {
+		next := m[newStart.y][newStart.x]
 		if next == current+1 {
-			score = score + walkTrail(newx, newy, m, ACTION_GO_DOWN, xbound, ybound)
+			alreadyFound = walkTrail(newStart, m, DIR_GO_DOWN, xbound, ybound, alreadyFound)
 		}
 	}
 
-	return score
+	return alreadyFound
 }
 
-func getTrailHeadScore(row, col int, m [][]int, ch chan<- int, wg *sync.WaitGroup) {
+func walkTrailParallel(start Vec2, m [][]int, ch chan<- int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	ch <- walkTrail(col, row, m, ACTION_GO_XX, len(m[0]), len(m))
+	ch <- len(walkTrail(start, m, DIR_GO_XX, len(m[0]), len(m), []Vec2{}))
 }
 
 func main() {
-	f, err := os.Open(TEST_FILE)
+	f, err := os.Open(FILE)
 
 	if err != nil {
 		panic(err)
@@ -106,28 +121,27 @@ func main() {
 
 	scores := 0
 
-	// ch := make(chan int)
-	// var wg sync.WaitGroup
+	ch := make(chan int)
+	var wg sync.WaitGroup
 
 	for row, line := range m {
 		for col, c := range line {
 			if c == 0 {
-				// wg.Add(1)
-				// go getTrailHeadScore(row, col, m, ch, &wg)
-				// TODO: try syncronous first
-				scores = scores + walkTrail(col, row, m, ACTION_GO_XX, len(m[0]), len(m))
+				wg.Add(1)
+				start := Vec2{x: col, y: row}
+				go walkTrailParallel(start, m, ch, &wg)
 			}
 		}
 	}
 
-	// go func() {
-	// 	wg.Wait()
-	// 	close(ch)
-	// }()
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
 
-	// for s := range ch {
-	// 	scores = scores + s
-	// }
+	for s := range ch {
+		scores = scores + s
+	}
 
-	fmt.Println(scores)
+	fmt.Println("Part1: ", scores)
 }
