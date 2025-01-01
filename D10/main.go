@@ -48,17 +48,26 @@ const (
 	DIR_GO_XX
 )
 
-func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound []Vec2) []Vec2 {
+func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound []Vec2, findEnds bool) []Vec2 {
 
 	current := m[start.y][start.x]
 
-	if current == 9 {
-		containsCurrent := slices.ContainsFunc(alreadyFound, func(v Vec2) bool {
-			return v.x == start.x && v.y == start.y
-		})
+	lookFor, incr := 9, 1
 
-		if containsCurrent {
-			return alreadyFound
+	if !findEnds {
+		lookFor, incr = 0, -1
+	}
+
+	if current == lookFor {
+		// Needs to remain exclusive
+		if findEnds {
+			containsCurrentPoint := slices.ContainsFunc(alreadyFound, func(v Vec2) bool {
+				return v.x == start.x && v.y == start.y
+			})
+
+			if containsCurrentPoint {
+				return alreadyFound
+			}
 		}
 
 		return append(alreadyFound, start)
@@ -68,8 +77,8 @@ func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound 
 	newStart := Vec2{x: start.x + 1, y: start.y}
 	if prevDir != DIR_GO_LEFT && isInsideBounds(newStart, xbound, ybound) {
 		next := m[newStart.y][newStart.x]
-		if next == current+1 {
-			alreadyFound = walkTrail(newStart, m, DIR_GO_RIGHT, xbound, ybound, alreadyFound)
+		if next == current+incr {
+			alreadyFound = walkTrail(newStart, m, DIR_GO_RIGHT, xbound, ybound, alreadyFound, findEnds)
 		}
 	}
 
@@ -77,8 +86,8 @@ func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound 
 	newStart = Vec2{x: start.x - 1, y: start.y}
 	if prevDir != DIR_GO_RIGHT && isInsideBounds(newStart, xbound, ybound) {
 		next := m[newStart.y][newStart.x]
-		if next == current+1 {
-			alreadyFound = walkTrail(newStart, m, DIR_GO_LEFT, xbound, ybound, alreadyFound)
+		if next == current+incr {
+			alreadyFound = walkTrail(newStart, m, DIR_GO_LEFT, xbound, ybound, alreadyFound, findEnds)
 		}
 	}
 
@@ -86,8 +95,8 @@ func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound 
 	newStart = Vec2{x: start.x, y: start.y - 1}
 	if prevDir != DIR_GO_DOWN && isInsideBounds(newStart, xbound, ybound) {
 		next := m[newStart.y][newStart.x]
-		if next == current+1 {
-			alreadyFound = walkTrail(newStart, m, DIR_GO_UP, xbound, ybound, alreadyFound)
+		if next == current+incr {
+			alreadyFound = walkTrail(newStart, m, DIR_GO_UP, xbound, ybound, alreadyFound, findEnds)
 		}
 	}
 
@@ -95,17 +104,17 @@ func walkTrail(start Vec2, m [][]int, prevDir, xbound, ybound int, alreadyFound 
 	newStart = Vec2{x: start.x, y: start.y + 1}
 	if prevDir != DIR_GO_UP && isInsideBounds(newStart, xbound, ybound) {
 		next := m[newStart.y][newStart.x]
-		if next == current+1 {
-			alreadyFound = walkTrail(newStart, m, DIR_GO_DOWN, xbound, ybound, alreadyFound)
+		if next == current+incr {
+			alreadyFound = walkTrail(newStart, m, DIR_GO_DOWN, xbound, ybound, alreadyFound, findEnds)
 		}
 	}
 
 	return alreadyFound
 }
 
-func walkTrailParallel(start Vec2, m [][]int, ch chan<- int, wg *sync.WaitGroup) {
+func walkTrailParallel(start Vec2, m [][]int, ch chan<- int, wg *sync.WaitGroup, findEnds bool) {
 	defer wg.Done()
-	ch <- len(walkTrail(start, m, DIR_GO_XX, len(m[0]), len(m), []Vec2{}))
+	ch <- len(walkTrail(start, m, DIR_GO_XX, len(m[0]), len(m), []Vec2{}, findEnds))
 }
 
 func main() {
@@ -119,29 +128,46 @@ func main() {
 
 	m := parseMap(f)
 
-	scores := 0
+	scores, ratings := 0, 0
 
-	ch := make(chan int)
-	var wg sync.WaitGroup
+	chScores, chRatings := make(chan int), make(chan int)
+	var wgScores sync.WaitGroup
+	var wgRatings sync.WaitGroup
 
 	for row, line := range m {
 		for col, c := range line {
 			if c == 0 {
-				wg.Add(1)
+				wgScores.Add(1)
 				start := Vec2{x: col, y: row}
-				go walkTrailParallel(start, m, ch, &wg)
+				go walkTrailParallel(start, m, chScores, &wgScores, true)
+			}
+
+			if c == 9 {
+				wgRatings.Add(1)
+				start := Vec2{x: col, y: row}
+				go walkTrailParallel(start, m, chRatings, &wgRatings, false)
 			}
 		}
 	}
 
 	go func() {
-		wg.Wait()
-		close(ch)
+		wgScores.Wait()
+		close(chScores)
 	}()
 
-	for s := range ch {
+	go func() {
+		wgRatings.Wait()
+		close(chRatings)
+	}()
+
+	for s := range chScores {
 		scores = scores + s
 	}
 
+	for r := range chRatings {
+		ratings = ratings + r
+	}
+
 	fmt.Println("Part1: ", scores)
+	fmt.Println("Part2: ", ratings)
 }
