@@ -2,26 +2,19 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/CXNNIBVL/goutil/math"
+	"math"
 )
 
-type Vec2 struct {
-	x, y int
-}
-
 func main() {
-	v1 := Vec2{x: 1, y: 2}
-	v2 := Vec2{x: -3, y: -2}
-
-	slope := (v2.y - v1.y) / (v2.x - v1.x)
-	if slope == 1 {
-		fmt.Println("Valid")
+	numDigits := 0
+	stonenum := 100000
+	for s := stonenum; s != 0; s = s / 10 {
+		numDigits++
 	}
 
-	sameHorizAndVertDistance := math.Abs(v2.y-v1.y) == math.Abs(v2.x-v1.x)
-
-	if sameHorizAndVertDistance {
-		fmt.Println("Valid")
-	}
+	fmt.Printf("%d %v\n", stonenum, numDigits%2 == 0)
+	hi := stonenum / int(math.Pow10(numDigits/2))
+	lo := stonenum - hi*int(math.Pow10(numDigits/2))
+	fmt.Println("Hi: ", hi)
+	fmt.Println("Lo: ", lo)
 }
