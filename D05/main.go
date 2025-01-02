@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -13,7 +12,6 @@ import (
 const (
 	FILE      = "../inputs/D05/input"
 	TEST_FILE = "../inputs/D05/input_test"
-	EN_DBG    = false
 )
 
 func getFileLines(f *os.File) []string {
@@ -152,14 +150,11 @@ func findMiddlePageNumber(update []int) int {
 	return update[len(update)/2]
 }
 
-func Part1And2(updates [][]int, rules []Rule) {
-	newUpdates := [][]int{}
+func Part1And2(updates [][]int, rules []Rule) (sumCorrect, sumIncorrect int) {
 	sumOfCorrectMiddlePageNrs, sumOfIncorrectMiddlePageNrs := 0, 0
 
 	for _, update := range updates {
 		newUpdate, updateWasAlreadyCorrect := applyRulesToUpdate(update, rules)
-		newUpdates = append(newUpdates, newUpdate)
-
 		middlePageNum := findMiddlePageNumber(newUpdate)
 
 		if updateWasAlreadyCorrect {
@@ -169,42 +164,10 @@ func Part1And2(updates [][]int, rules []Rule) {
 		}
 	}
 
-	if EN_DBG {
-		fmt.Println("### Rules:")
-		fmt.Println("-------------------------------------")
-		sort.Slice(rules, func(i, j int) bool {
-			return rules[i].page < rules[j].page
-		})
-
-		for _, rule := range rules {
-			sort.Slice(rule.mustBeBeforePages, func(i, j int) bool {
-				return rule.mustBeBeforePages[i] < rule.mustBeBeforePages[j]
-			})
-		}
-
-		for _, rule := range rules {
-			fmt.Printf("%+v\n", rule)
-		}
-
-		fmt.Println("### Updates:")
-		fmt.Println("-------------------------------------")
-		for _, update := range updates {
-			fmt.Printf("%+v\n", update)
-		}
-
-		fmt.Println("### New Updates:")
-		fmt.Println("-------------------------------------")
-		for _, update := range newUpdates {
-			fmt.Printf("%+v\n", update)
-		}
-	}
-
-	fmt.Println("Part1: ", sumOfCorrectMiddlePageNrs)
-	fmt.Println("Part2: ", sumOfIncorrectMiddlePageNrs)
+	return sumOfCorrectMiddlePageNrs, sumOfIncorrectMiddlePageNrs
 }
 
-func main() {
-
+func parseInputs() (updates [][]int, rules []Rule) {
 	file, err := os.Open(FILE)
 
 	if err != nil {
@@ -214,12 +177,14 @@ func main() {
 	defer file.Close()
 	ruleLines, updateLines := parseRuleAndUpdateLinesFromLines(getFileLines(file))
 
-	if ruleLines == nil || updateLines == nil {
-		panic("Read no lines from file or newline separator not found")
-	}
+	return parseUpdates(updateLines), parseRules(ruleLines)
+}
 
-	rules := parseRules(ruleLines)
-	updates := parseUpdates(updateLines)
+func main() {
 
-	Part1And2(updates, rules)
+	updates, rules := parseInputs()
+	sumCorrect, sumIncorrect := Part1And2(updates, rules)
+
+	fmt.Println("Part1: ", sumCorrect)
+	fmt.Println("Part2: ", sumIncorrect)
 }
