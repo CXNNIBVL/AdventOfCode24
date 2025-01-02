@@ -100,7 +100,7 @@ func countDiagonalMatches(mat Mat2, seq string, addScanReverse bool) int {
 	return matches
 }
 
-func Part1(mat Mat2) {
+func Part1(mat Mat2) int {
 	seq := XMAS
 
 	matches := countHorizontalMatches(mat, seq, true)
@@ -113,7 +113,7 @@ func Part1(mat Mat2) {
 
 	mat.Reverse()
 
-	fmt.Printf("Part1: Found %d matches\n", matches)
+	return matches
 }
 
 func foundTypeA(mat Mat2, row, col int) bool {
@@ -136,7 +136,7 @@ func foundTypeD(mat Mat2, row, col int) bool {
 	return mat[row][col] == 'A' && mat[row-1][col-1] == 'S' && mat[row+1][col-1] == 'M' && mat[row-1][col+1] == 'S' && mat[row+1][col+1] == 'M'
 }
 
-func Part2(mat Mat2) {
+func Part2(mat Mat2) int {
 
 	nrows, ncols := mat.NumRowsCols()
 
@@ -163,26 +163,31 @@ func Part2(mat Mat2) {
 		}
 	}
 
-	fmt.Printf("Part2: Found %d matches\n", matches)
+	return matches
 }
 
-func main() {
-
+func parseInputs() Mat2 {
 	file, err := os.Open(FILE)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	defer file.Close()
 
-	mat := parseFileAsMatrix(file)
+	return parseFileAsMatrix(file)
+}
+
+func main() {
+
+	mat := parseInputs()
 
 	if rows, cols := mat.NumRowsCols(); rows != cols {
 		panic("Cannot handle non quadratic search matrices")
 	}
 
-	Part1(mat)
-	Part2(mat)
+	matches := Part1(mat)
+	fmt.Printf("Part1: Found %d matches\n", matches)
+	matches = Part2(mat)
+	fmt.Printf("Part2: Found %d matches\n", matches)
 }

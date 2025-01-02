@@ -38,44 +38,35 @@ func getTotalDistance(leftList, rightList []uint) uint {
 	return totalDistance
 }
 
-func parseFile(f *os.File) (left, right []uint, e error) {
+func parseFile(f *os.File) (left, right []uint) {
 	sc := bufio.NewScanner(f)
 
 	left, right = make([]uint, 0, 100), make([]uint, 0, 100)
 
 	for sc.Scan() {
-		leftIntStr, spaceAndIntStr, found := strings.Cut(sc.Text(), " ")
+		leftIntStr, spaceAndIntStr, _ := strings.Cut(sc.Text(), " ")
 
-		if !found {
-			return nil, nil, fmt.Errorf("invalid file format")
-		}
-
-		l, err := strconv.ParseUint(leftIntStr, 10, 64)
-
-		if err != nil {
-			return nil, nil, err
-		}
+		l, _ := strconv.ParseUint(leftIntStr, 10, 64)
 
 		rightIntStr := strings.ReplaceAll(spaceAndIntStr, " ", "")
 
-		r, err := strconv.ParseUint(rightIntStr, 10, 64)
-
-		if err != nil {
-			return nil, nil, err
-		}
+		r, _ := strconv.ParseUint(rightIntStr, 10, 64)
 
 		left = append(left, uint(l))
 		right = append(right, uint(r))
 	}
 
-	return left, right, nil
+	return left, right
 }
 
-func Part1(left, right []uint) {
-	fmt.Printf("Part1: Total Distance = %d\n", getTotalDistance(left, right))
+func Part1(left, right []uint) uint {
+	sortList(left)
+	sortList(right)
+
+	return getTotalDistance(left, right)
 }
 
-func Part2(left, right []uint) {
+func Part2(left, right []uint) uint64 {
 	multMap := make(map[uint]uint)
 
 	for _, v := range left {
@@ -98,10 +89,10 @@ func Part2(left, right []uint) {
 		similarityScore = similarityScore + uint64(k)*uint64(v)
 	}
 
-	fmt.Printf("Part2: Similarity Score = %d\n", similarityScore)
+	return similarityScore
 }
 
-func main() {
+func parseInputs() (left, right []uint) {
 	input, err := os.Open(INPUT_FILE)
 
 	if err != nil {
@@ -110,15 +101,16 @@ func main() {
 
 	defer input.Close()
 
-	left, right, err := parseFile(input)
+	left, right = parseFile(input)
+	return left, right
+}
 
-	if err != nil {
-		panic(err)
-	}
+func main() {
 
-	sortList(left)
-	sortList(right)
+	left, right := parseInputs()
+	sol1 := Part1(left, right)
+	similarityScore := Part2(left, right)
 
-	Part1(left, right)
-	Part2(left, right)
+	fmt.Printf("Part1: Total Distance = %d\n", sol1)
+	fmt.Printf("Part2: Similarity Score = %d\n", similarityScore)
 }

@@ -32,12 +32,22 @@ cd D01
 go run .
 ```
 
+To benchmark, run
+```bash
+go test -bench=. -benchmem
+```
+
 ## Day 02 [(Code)](./D02/main.go)
 For [day two](https://adventofcode.com/2024/day/2), run the go app via
 
 ```bash
 cd D02
 go run .
+```
+
+To benchmark, run
+```bash
+go test -bench=. -benchmem
 ```
 
 ## Day 03 [(Code)](./D03/calc.sh)
@@ -62,12 +72,22 @@ Here some crude drawings detailing (really badly) what math i came up with
 * [assets/D4/01.jpg](./assets/D04/1%20(Mittel).jpg)
 * [assets/D4/02.jpg](./assets/D04/2%20(Mittel).jpg)
 
+To benchmark, run
+```bash
+go test -bench=. -benchmem
+```
+
 ## Day 05 [(Code)](./D05/main.go)
 For [day five](https://adventofcode.com/2024/day/5), run the go app via
 
 ```bash
 cd D05
 go run .
+```
+
+To benchmark, run
+```bash
+go test -bench=. -benchmem
 ```
 
 ## Day 06 [(Code)](./D06/main.go)
