@@ -72,6 +72,11 @@ Here some crude drawings detailing (really badly) what math i came up with
 * [assets/D4/01.jpg](./assets/D04/1%20(Mittel).jpg)
 * [assets/D4/02.jpg](./assets/D04/2%20(Mittel).jpg)
 
+To benchmark, run
+```bash
+go test -bench=. -benchmem
+```
+
 ## Day 05 [(Code)](./D05/main.go)
 For [day five](https://adventofcode.com/2024/day/5), run the go app via
 
