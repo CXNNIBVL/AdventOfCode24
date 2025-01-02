@@ -114,7 +114,7 @@ func IsReportSafe(report Report) bool {
 	return (allIncreasing || allDecreasing) && adjacentDiffOk
 }
 
-func Part1(reports []Report) {
+func Part1(reports []Report) int {
 	safeCtr := 0
 
 	for _, r := range reports {
@@ -123,7 +123,7 @@ func Part1(reports []Report) {
 		}
 	}
 
-	fmt.Printf("Part 1: Safe reports = %d\n", safeCtr)
+	return safeCtr
 }
 
 func tryApplyProblemDampener(report Report) bool {
@@ -139,7 +139,7 @@ func tryApplyProblemDampener(report Report) bool {
 	return false
 }
 
-func Part2(reports []Report) {
+func Part2(reports []Report) int {
 	safeCtr := 0
 
 	for _, report := range reports {
@@ -156,7 +156,7 @@ func Part2(reports []Report) {
 		}
 	}
 
-	fmt.Printf("Part 2: Safe reports = %d\n", safeCtr)
+	return safeCtr
 }
 
 func main() {
@@ -173,6 +173,8 @@ func main() {
 		panic(err)
 	}
 
-	Part1(reports)
-	Part2(reports)
+	safeCtr := Part1(reports)
+	fmt.Printf("Part 1: Safe reports = %d\n", safeCtr)
+	safeCtr = Part2(reports)
+	fmt.Printf("Part 2: Safe reports = %d\n", safeCtr)
 }

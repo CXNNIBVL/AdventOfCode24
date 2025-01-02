@@ -45,6 +45,11 @@ cd D02
 go run .
 ```
 
+To benchmark, run
+```bash
+go test -bench=. -benchmem
+```
+
 ## Day 03 [(Code)](./D03/calc.sh)
 For [day three](https://adventofcode.com/2024/day/3), run the bash script via
 
