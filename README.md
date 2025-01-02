@@ -32,6 +32,11 @@ cd D01
 go run .
 ```
 
+To benchmark, run
+```bash
+go test -bench=. -benchmem
+```
+
 ## Day 02 [(Code)](./D02/main.go)
 For [day two](https://adventofcode.com/2024/day/2), run the go app via
 
