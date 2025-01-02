@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
 )
 
 const (
@@ -63,25 +62,21 @@ func (d Direction) Inverse() (i Direction) {
 	switch d {
 	case DIR_UP:
 		i = DIR_DOWN
-		break
 	case DIR_DOWN:
 		i = DIR_UP
-		break
 	case DIR_LEFT:
 		i = DIR_RIGHT
-		break
 	case DIR_RIGHT:
 		i = DIR_LEFT
-		break
 	}
 
 	return
 }
 
-func walkRegion(thisId rune, position Vec2, mat Mat2, commandedDirection Direction, visited *[]Vec2) RegionInfo {
+func walkRegion(thisId rune, position Vec2, mat Mat2, commandedDirection Direction, visited map[Vec2]bool) RegionInfo {
 
 	// Mark as visited
-	*visited = append(*visited, position)
+	visited[position] = true
 
 	thisInfo := RegionInfo{area: 1, perimeter: 3}
 
@@ -94,7 +89,7 @@ func walkRegion(thisId rune, position Vec2, mat Mat2, commandedDirection Directi
 			// Remove border in direction
 			thisInfo.perimeter--
 
-			if slices.Contains(*visited, nextPosition) {
+			if visited[nextPosition] {
 				return
 			}
 
@@ -128,7 +123,7 @@ func (r *RegionInfo) calculatePrice() int {
 }
 
 func main() {
-	f, err := os.Open(TEST_FILE2)
+	f, err := os.Open(FILE)
 
 	if err != nil {
 		panic(err)
@@ -140,13 +135,13 @@ func main() {
 
 	regionInfo := make(map[rune][]RegionInfo)
 
-	var visited []Vec2
+	visited := make(map[Vec2]bool)
 
 	for row, line := range mat {
 		for col, r := range line {
-			if !slices.Contains(visited, Vec2{x: col, y: row}) {
+			if !visited[Vec2{x: col, y: row}] {
 
-				info := walkRegion(r, Vec2{x: col, y: row}, mat, DIR_XX, &visited)
+				info := walkRegion(r, Vec2{x: col, y: row}, mat, DIR_XX, visited)
 
 				var v []RegionInfo
 
